@@ -7,18 +7,34 @@ import { currentUser } from "@clerk/nextjs/server";
 
 export default async function Home() {
   const user = await currentUser();
-  const posts = await getPosts();
-  const dbUserId = await getDbUserId();
+
+  let posts: any[] = [];
+  let dbUserId: string | null = null;
+
+  try {
+    // Fetch posts first
+    posts = await getPosts();
+
+    // Then fetch user ID only if posts were fetched successfully
+    dbUserId = await getDbUserId();
+  } catch (error) {
+    console.error("Error in Home page:", error);
+    // Optionally render a fallback UI or just show nothing
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
       <div className="lg:col-span-6">
-        {user ? <CreatePost /> : null}
+        {user && <CreatePost />}
 
         <div className="space-y-6">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} dbUserId={dbUserId} />
-          ))}
+          {posts.length > 0 ? (
+            posts.map((post) => (
+              <PostCard key={post.id} post={post} dbUserId={dbUserId} />
+            ))
+          ) : (
+            <p className="text-gray-500">No posts to show.</p>
+          )}
         </div>
       </div>
 
